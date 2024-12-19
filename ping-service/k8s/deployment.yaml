@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ping-service
+  namespace: dt-dapr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ping-service
+  template:
+    metadata:
+      labels:
+        app: ping-service
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "ping-service"
+        dapr.io/app-port: "8080"
+    spec:
+      containers:
+      - name: ping-service
+        image: rochabr/ping-service:v5
+        ports:
+        - containerPort: 8080
+        - containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000    # Updated to use health check port
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000    # Updated to use health check port
+          initialDelaySeconds: 5
+          periodSeconds: 10

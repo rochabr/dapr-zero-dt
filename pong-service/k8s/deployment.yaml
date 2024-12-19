@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pong-service
+  namespace: dt-dapr
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: pong-service
+  template:
+    metadata:
+      labels:
+        app: pong-service
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "pong-service"
+        dapr.io/app-port: "8080"
+    spec:
+      containers:
+      - name: pong-service
+        image: rochabr/pong-service:v6
+        ports:
+        - containerPort: 8080
+        - containerPort: 3000
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000    # Updated to use health check port
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000    # Updated to use health check port
+          initialDelaySeconds: 5
+          periodSeconds: 10
